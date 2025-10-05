@@ -110,6 +110,19 @@
         padding: 5px 10px;
         margin-top: 5px;
     }
+
+    /* ==== Layout A4 untuk hasil download ==== */
+    @media print, screen {
+      #laporanArea {
+          background: var(--abu);
+          padding: 25px;
+          width: 794px;   /* A4 width */
+          min-height: 1123px; /* A4 height */
+          margin: 0 auto;
+          border-radius: 12px;
+          box-shadow: 0 0 15px rgba(0,0,0,0.4);
+      }
+    }
 </style>
 </head>
 <body>
@@ -160,7 +173,7 @@
 <div class="card">
     <button onclick="simpanRiwayat()">💾 Simpan Riwayat</button>
     <button onclick="hapusSemua()">🗑️ Hapus Semua Riwayat</button>
-    <button onclick="downloadLaporan()">📸 Download JPG</button>
+    <button onclick="downloadLaporan()">📸 Download JPG (A4)</button>
 </div>
 
 <div class="card" id="riwayat">
@@ -250,10 +263,20 @@ function hapusSemua(){
     }
 }
 
-// === FITUR DOWNLOAD JPG ===
+// === FITUR DOWNLOAD JPG A4 ===
 function downloadLaporan(){
     const area = document.getElementById("laporanArea");
-    html2canvas(area, {scale: 2}).then(canvas => {
+    const a4Width = 794;   // A4 width (px)
+    const a4Height = 1123; // A4 height (px)
+
+    html2canvas(area, {
+        scale: 2,
+        backgroundColor: "#121212",
+        width: a4Width,
+        height: a4Height,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.offsetWidth
+    }).then(canvas => {
         const link = document.createElement("a");
         const nama = document.getElementById("nama").value || "Relawan";
         const tgl = document.getElementById("tanggal").value || "TanpaTanggal";
