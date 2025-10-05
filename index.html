@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Keuangan Harian Relawan</title>
+<style>
+    :root {
+        --kuning: #ffc107;
+        --hitam: #121212;
+        --putih: #f5f5f5;
+        --abu: #2a2a2a;
+    }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+    }
+    body {
+        background: var(--hitam);
+        color: var(--putih);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+    h1 {
+        color: var(--kuning);
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .card {
+        background: var(--abu);
+        padding: 20px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(255,193,7,0.2);
+    }
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: 500;
+    }
+    input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        margin-top: 5px;
+        background: #1e1e1e;
+        color: var(--putih);
+    }
+    input:focus {
+        outline: 2px solid var(--kuning);
+    }
+    table {
+        width: 100%;
+        margin-top: 10px;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background: var(--kuning);
+        color: var(--hitam);
+    }
+    td input {
+        width: 100%;
+    }
+    button {
+        background: var(--kuning);
+        color: var(--hitam);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 15px;
+        margin-top: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    button:hover {
+        background: #ffca28;
+    }
+    .hasil {
+        background: var(--kuning);
+        color: var(--hitam);
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 10px;
+    }
+    .riwayat-item {
+        background: #1f1f1f;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    .riwayat-item span {
+        display: block;
+    }
+    .riwayat-item button {
+        background: crimson;
+        color: white;
+        padding: 5px 10px;
+        margin-top: 5px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Laporan Keuangan Relawan</h1>
+
+<div id="laporanArea">
+<div class="card">
+    <label>Tanggal</label>
+    <input type="date" id="tanggal">
+
+    <label>Nama Relawan</label>
+    <input type="text" id="nama" placeholder="Masukkan nama">
+
+    <label>Jumlah Pengambilan (KL)</label>
+    <input type="number" id="ambil" placeholder="0">
+
+    <label>Jumlah Penitipan (KL)</label>
+    <input type="number" id="titip" placeholder="0">
+
+    <label>Nominal Total (Rp)</label>
+    <input type="number" id="total" placeholder="402500" value="402500">
+
+    <label>BOP (Rp)</label>
+    <input type="number" id="bop" placeholder="75000" value="75000">
+
+    <label>Persentase Regulasi (%)</label>
+    <input type="number" id="persen" placeholder="10" value="10">
+</div>
+
+<div class="card">
+    <div class="hasil" id="hasilSementara">Hasil Sementara: Rp 0</div>
+    <div class="hasil" id="hasilRegulasi">Regulasi: Rp 0</div>
+    <div class="hasil" id="hasilAkhir">Hasil Akhir: Rp 0</div>
+</div>
+
+<div class="card">
+    <h3>Pengeluaran</h3>
+    <table id="tabelPengeluaran">
+        <tr><th>Keterangan</th><th>Nominal (Rp)</th></tr>
+    </table>
+    <button onclick="tambahBaris()">+ Tambah Pengeluaran</button>
+    <div class="hasil" id="totalPengeluaran">Total Pengeluaran: Rp 0</div>
+    <div class="hasil" id="hasilBersih">Hasil Bersih: Rp 0</div>
+</div>
+</div>
+
+<div class="card">
+    <button onclick="simpanRiwayat()">💾 Simpan Riwayat</button>
+    <button onclick="hapusSemua()">🗑️ Hapus Semua Riwayat</button>
+    <button onclick="downloadLaporan()">📸 Download JPG</button>
+</div>
+
+<div class="card" id="riwayat">
+    <h3>📜 Riwayat Laporan</h3>
+    <div id="daftarRiwayat"></div>
+</div>
+
+<!-- CDN html2canvas -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script>
+function formatRupiah(angka){
+    return "Rp " + angka.toLocaleString("id-ID");
+}
+
+const inputIds = ["total", "bop", "persen"];
+inputIds.forEach(id => document.getElementById(id).addEventListener("input", hitungSemua));
+
+function hitungSemua(){
+    let total = +document.getElementById("total").value || 0;
+    let bop = +document.getElementById("bop").value || 0;
+    let persen = +document.getElementById("persen").value || 0;
+    let sementara = total - bop;
+    let regulasi = Math.floor(sementara * persen / 100);
+    let akhir = sementara - regulasi;
+    document.getElementById("hasilSementara").innerText = "Hasil Sementara: " + formatRupiah(sementara);
+    document.getElementById("hasilRegulasi").innerText = "Regulasi: " + formatRupiah(regulasi);
+    document.getElementById("hasilAkhir").innerText = "Hasil Akhir: " + formatRupiah(akhir);
+    hitungPengeluaran(akhir);
+}
+
+function tambahBaris(){
+    const table = document.getElementById("tabelPengeluaran");
+    const row = table.insertRow(-1);
+    const cell1 = row.insertCell(0);
+    const cell2 = row.insertCell(1);
+    cell1.innerHTML = '<input type="text" placeholder="Keterangan">';
+    cell2.innerHTML = '<input type="number" placeholder="0" oninput="hitungSemua()">';
+}
+
+function hitungPengeluaran(hasilAkhir){
+    const inputs = document.querySelectorAll("#tabelPengeluaran input[type='number']");
+    let total = 0;
+    inputs.forEach(i => total += +i.value || 0);
+    document.getElementById("totalPengeluaran").innerText = "Total Pengeluaran: " + formatRupiah(total);
+    document.getElementById("hasilBersih").innerText = "Hasil Bersih: " + formatRupiah(hasilAkhir - total);
+}
+
+function simpanRiwayat(){
+    const tanggal = document.getElementById("tanggal").value;
+    const nama = document.getElementById("nama").value;
+    const hasil = document.getElementById("hasilBersih").innerText;
+    if(!tanggal || !nama){
+        alert("Isi nama dan tanggal dulu!");
+        return;
+    }
+    const data = JSON.parse(localStorage.getItem("riwayat")) || [];
+    data.push({tanggal, nama, hasil});
+    localStorage.setItem("riwayat", JSON.stringify(data));
+    tampilRiwayat();
+}
+
+function tampilRiwayat(){
+    const data = JSON.parse(localStorage.getItem("riwayat")) || [];
+    const container = document.getElementById("daftarRiwayat");
+    container.innerHTML = "";
+    data.forEach((r,i)=>{
+        const div = document.createElement("div");
+        div.className = "riwayat-item";
+        div.innerHTML = `<span><b>${r.tanggal}</b> - ${r.nama}</span><span>${r.hasil}</span>
+                         <button onclick="hapusRiwayat(${i})">Hapus</button>`;
+        container.appendChild(div);
+    });
+}
+
+function hapusRiwayat(i){
+    const data = JSON.parse(localStorage.getItem("riwayat")) || [];
+    data.splice(i,1);
+    localStorage.setItem("riwayat", JSON.stringify(data));
+    tampilRiwayat();
+}
+
+function hapusSemua(){
+    if(confirm("Yakin hapus semua riwayat?")){
+        localStorage.removeItem("riwayat");
+        tampilRiwayat();
+    }
+}
+
+// === FITUR DOWNLOAD JPG ===
+function downloadLaporan(){
+    const area = document.getElementById("laporanArea");
+    html2canvas(area, {scale: 2}).then(canvas => {
+        const link = document.createElement("a");
+        const nama = document.getElementById("nama").value || "Relawan";
+        const tgl = document.getElementById("tanggal").value || "TanpaTanggal";
+        link.download = `Laporan_${nama}_${tgl}.jpg`;
+        link.href = canvas.toDataURL("image/jpeg", 1.0);
+        link.click();
+    });
+}
+
+window.onload = ()=>{
+    tampilRiwayat();
+    hitungSemua();
+};
+</script>
+</body>
+</html>
